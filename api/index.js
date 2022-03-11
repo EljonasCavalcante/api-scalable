@@ -4,6 +4,7 @@ const bodyParser = require('body-parser')
 const config = require('config')
 const NaoEncontrado = require('./erros/NaoEncontrado')
 const CampoInvalido = require('./erros/CampoInvalido')
+const DadosNaoFornecidos = require('./erros/DadosNaoFornecidos')
 
 app.use(bodyParser.json())
 
@@ -18,7 +19,7 @@ app.use((erro, requisicao, resposta, proximo) => {
         status = 404
     }
 
-    if (erro instanceof CampoInvalido) {
+    if (erro instanceof CampoInvalido || erro instanceof DadosNaoFornecidos) {
         status = 400
     }
     resposta.status(status)
