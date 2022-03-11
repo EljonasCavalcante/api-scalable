@@ -54,7 +54,7 @@ roteador.put('/:idFornecedor', async (requisicao, resposta, proximo) => {
     }
 })
 
-roteador.delete('/:idFornecedor', async (requisicao, resposta) => {
+roteador.delete('/:idFornecedor', async (requisicao, resposta, proximo) => {
     try {  
         const id = requisicao.params.idFornecedor
         const fornecedor = new Fornecedor( {id: id})
@@ -63,13 +63,7 @@ roteador.delete('/:idFornecedor', async (requisicao, resposta) => {
         resposta.status(204)
         resposta.end()
     }catch (erro) {
-        resposta.status(404)
-        resposta.send(
-            JSON.stringify({
-                mensagem: erro.message
-            })
-        )
-
+        proximo(erro)
     }
 })
 
