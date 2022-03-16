@@ -62,8 +62,8 @@ class Fornecedor {
     }
 
     validar () {
-        const campos = ['empresa','email','categoria']
-        
+        const campos = ['empresa', 'email', 'categoria']
+
         campos.forEach(campo => {
             const valor = this[campo]
 
