@@ -10,7 +10,7 @@ roteador.get('/', async (requisicao, resposta) => {
 })
 
 roteador.post('/', async (requisicao, resposta) => {
-    const idFornecedor = resiquicao.params.idFornecedor
+    const idFornecedor = requisicao.params.idFornecedor
     const corpo = requisicao.body
     const dados = Object.assign({}, corpo, { fornecedor: idFornecedor})
     const produto = new Produto(dados)
