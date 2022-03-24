@@ -1,6 +1,7 @@
 const roteador = require('express').Router({ mergeParams: true})
 const Tabela = require('./TabelaProduto')
 const Produto = require('./Produto')
+const req = require('express/lib/request')
 const Serializador = require('../../../Serializador').SerializadorProduto
 
 
@@ -60,6 +61,26 @@ roteador.get('/:id', async (requisicao, resposta, proximo) => {
         resposta.send(            
              serializador.serializar(produto)            
         )
+    } catch (erro) {
+        proximo(erro)
+    }
+})
+
+roteador.put('/:id', async (requisicao, resposta, proximo) => {
+    try {
+        const dados = Object.assign(
+            {},
+            requisicao.body,
+            {
+                id: requisicao.params.id,
+                fornecedor: requisicao.fornecedor.id
+            }
+        )
+    
+        const produto = new Produto(dados)
+        await produto.atualizar()
+        resposta.status(204)
+        resposta.end()
     } catch (erro) {
         proximo(erro)
     }
