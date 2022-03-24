@@ -1,3 +1,4 @@
+const { purge } = require('.')
 const Tabela = require('./TabelaProduto')
 
 class Produto {
@@ -39,6 +40,16 @@ class Produto {
 
     apagar () {
         return Tabela.remover(this.id, this.fornecedor)
+    }
+
+    async carregar () {
+        const produto = await Tabela.pegarPorId(this.id, this.fornecedor)
+        this.titulo = produto.titulo
+        this.preco = produto.preco
+        this.estoque = produto.estoque
+        this.dataCriacao = produto.dataCriacao
+        this.dataAtualizacao = produto.dataAtualizacao
+        this.versao = produto.versao
     }
 }
 
