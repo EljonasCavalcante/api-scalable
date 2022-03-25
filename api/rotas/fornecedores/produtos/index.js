@@ -1,9 +1,7 @@
-const roteador = require('express').Router({ mergeParams: true})
+const roteador = require('express').Router({ mergeParams: true })
 const Tabela = require('./TabelaProduto')
 const Produto = require('./Produto')
-const req = require('express/lib/request')
 const Serializador = require('../../../Serializador').SerializadorProduto
-
 
 roteador.get('/', async (requisicao, resposta) => {
     const produtos = await Tabela.listar(requisicao.fornecedor.id)
@@ -19,17 +17,21 @@ roteador.post('/', async (requisicao, resposta, proximo) => {
     try {
         const idFornecedor = requisicao.fornecedor.id
         const corpo = requisicao.body
-        const dados = Object.assign({}, corpo, { fornecedor: idFornecedor})
+        const dados = Object.assign({}, corpo, { fornecedor: idFornecedor })
         const produto = new Produto(dados)
         await produto.criar()
         const serializador = new Serializador(
             resposta.getHeader('Content-Type')
         )
+        resposta.set('ETag', produto.versao)
+        const timestamp = (new Date(produto.dataAtualizacao)).getTime()
+        resposta.set('Last-Modified', timestamp)
+        resposta.set('Location', `/api/fornecedores/${produto.fornecedor}/produtos/${produto.id}`)
         resposta.status(201)
         resposta.send(
             serializador.serializar(produto)
         )
-    }catch (erro) {
+    } catch (erro) {
         proximo(erro)
     }
 })
@@ -39,7 +41,7 @@ roteador.delete('/:id', async (requisicao, resposta) => {
         id: requisicao.params.id,
         fornecedor: requisicao.fornecedor.id
     }
-    
+
     const produto = new Produto(dados)
     await produto.apagar()
     resposta.status(204)
@@ -52,15 +54,38 @@ roteador.get('/:id', async (requisicao, resposta, proximo) => {
             id: requisicao.params.id,
             fornecedor: requisicao.fornecedor.id
         }
+    
         const produto = new Produto(dados)
         await produto.carregar()
         const serializador = new Serializador(
             resposta.getHeader('Content-Type'),
-            ['preco', 'estoque','fornecedor', 'datacriacao', 'dataAtualizacao', 'versao']
+            ['preco', 'estoque', 'fornecedor', 'dataCriacao', 'dataAtualizacao', 'versao']
         )
-        resposta.send(            
-             serializador.serializar(produto)            
+        resposta.set('ETag', produto.versao)
+        const timestamp = (new Date(produto.dataAtualizacao)).getTime()
+        resposta.set('Last-Modified', timestamp)
+        resposta.send(
+            serializador.serializar(produto)
         )
+    } catch (erro) {
+        proximo(erro)
+    }
+})
+
+roteador.head('/:id', async (requisicao, resposta, proximo) => {
+    try {
+        const dados = {
+            id: requisicao.params.id,
+            fornecedor: requisicao.fornecedor.id
+        }
+    
+        const produto = new Produto(dados)
+        await produto.carregar()
+        resposta.set('ETag', produto.versao)
+        const timestamp = (new Date(produto.dataAtualizacao)).getTime()
+        resposta.set('Last-Modified', timestamp)
+        resposta.status(200)
+        resposta.end()
     } catch (erro) {
         proximo(erro)
     }
@@ -79,6 +104,10 @@ roteador.put('/:id', async (requisicao, resposta, proximo) => {
     
         const produto = new Produto(dados)
         await produto.atualizar()
+        await produto.carregar()
+        resposta.set('ETag', produto.versao)
+        const timestamp = (new Date(produto.dataAtualizacao)).getTime()
+        resposta.set('Last-Modified', timestamp)
         resposta.status(204)
         resposta.end()
     } catch (erro) {
@@ -95,10 +124,14 @@ roteador.post('/:id/diminuir-estoque', async (requisicao, resposta, proximo) => 
     
         await produto.carregar()
         produto.estoque = produto.estoque - requisicao.body.quantidade
-        await produto.dimunirEstoque()
+        await produto.diminuirEstoque()
+        await produto.carregar()
+        resposta.set('ETag', produto.versao)
+        const timestamp = (new Date(produto.dataAtualizacao)).getTime()
+        resposta.set('Last-Modified', timestamp)
         resposta.status(204)
         resposta.end()
-    }catch (erro) {
+    } catch (erro) {
         proximo(erro)
     }
 })
